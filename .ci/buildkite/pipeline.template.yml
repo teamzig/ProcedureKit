@@ -5,6 +5,7 @@ steps:
   -
     name: "ProcedureKit: macOS"
     command: "source /usr/local/opt/chruby/share/chruby/chruby.sh && chruby ruby && bundle install --quiet && bundle exec fastlane mac test"
+    artifact_paths: 'build_output/*'
     agents:
       xcode: "$XCODE"
 #  -
