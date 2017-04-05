@@ -1,3 +1,464 @@
+# 4.0.0 Beta 7
+
+## Breaking Changes
+1. [#668](https://github.com/ProcedureKit/ProcedureKit/pull/668) Adds Procedure event queue. Procedure now utilises an internal serial FIFO queue which dispatched user "events". Procedure events include anything that calls user code, like overridden methods, observer callbacks, injecting results from a dependency. See the PR for more details, there are some breaking changes here, which is very well documented in the PR description.
+2. [#681](https://github.com/ProcedureKit/ProcedureKit/pull/681) [@swiftlyfalling](https://github.com/swiftlyfalling) Refactors how Condition is implemented. There are breaking changes here which are well documented in PR description.
+
+## New APIs & Enhancements
+1. [#662](https://github.com/ProcedureKit/ProcedureKit/pull/662), [#673](https://github.com/ProcedureKit/ProcedureKit/pull/673) Improves the TimeoutObserver implementation by utilising a registrar to handle the lifetime of timers. By [@swiftlyfalling](https://github.com/swiftlyfalling).
+2. [#658](https://github.com/ProcedureKit/ProcedureKit/issues/658), [#659](https://github.com/ProcedureKit/ProcedureKit/pull/659) Adds Repeatable type.
+3. [#663](https://github.com/ProcedureKit/ProcedureKit/pull/663) Fixes building when using Swift Package Manager.
+4. [#664](https://github.com/ProcedureKit/ProcedureKit/pull/664) Improves Swift 3 URLError handling in Network procedures.
+5. [#690](https://github.com/ProcedureKit/ProcedureKit/pull/690) Adds `UserConfirmationCondition` as in _Operations_.
+6. [#676](https://github.com/ProcedureKit/ProcedureKit/pull/676) Enhances `AnyProcedure` to allow for `AnyOutputProcedure`. Thanks to [@sviatoslav](https://github.com/sviatoslav).
+
+## Bug Fixes
+1. [#660](https://github.com/ProcedureKit/ProcedureKit/issues/660), [#661](https://github.com/ProcedureKit/ProcedureKit/pull/661) Fixes a string conversion memory leak, which is actually a bug in Swift itself.
+2. [#666](https://github.com/ProcedureKit/ProcedureKit/pull/666) Fixes code signing issues that prevents compiling release configuration builds.
+3. [#669](https://github.com/ProcedureKit/ProcedureKit/pull/669) Fixes a type to Dan's GitHub profile.
+4. [#677](https://github.com/ProcedureKit/ProcedureKit/pull/677) Restricts `RetryProcedure` to only allow `Procedure` subclasses.
+5. [#679](https://github.com/ProcedureKit/ProcedureKit/pull/679) `AuthorizedFor` condition now ensures that the produced `AuthorizedCapabilityProcedure` is mutually exclusive, rather than the procedure it gets attached to.
+6. [#689](https://github.com/ProcedureKit/ProcedureKit/pull/689) Updates SwiftLint ruleset.
+7. [#687](https://github.com/ProcedureKit/ProcedureKit/pull/687) Uses `dependencyCancelledWithErrors` error context.
+
+# 4.0.0 Beta 6
+_ProcedureKit_ is nearing a final v4 release. Beta 6 sees all functionality that will be added for v4 in place. Some breaking changes around cancellation are currently being discussed, and will come in the next (and hopefully last) beta.
+
+In this release, [@swiftlyfalling](https://github.com/swiftlyfalling) has been doing amazing work finding, fixing and adding tests for race-conditions, memory leaks, general thread-safety and cancellation. It really has been fantastic. Currently, over 83% for all components on average. 
+
+## New APIs
+1. [#631](https://github.com/ProcedureKit/ProcedureKit/issues/631), [#632](https://github.com/ProcedureKit/ProcedureKit/pull/632) Result injection is now supported for `NetworkDataProcedure` et. al. This API is called `injectPayload(fromNetwork:)` and will support functionality like this:
+    ```swift
+    // Procedure to get a network request
+    let getRequest = GetRequest()
+    // Procedure to get the Data payload
+    let network = NetworkDataProcedure()
+        // Inject the URLRequest
+        .injectResult(from: getRequest)
+    // Procedure to decode the data payload
+    let decode = DecodeNetworkPayload()
+        // Inject the network payload
+        .injectPayload(fromNetwork: network)
+    ```
+    Thanks to [@robfeldmann](https://github.com/robfeldmann) for raising the initial issue.
+2. [#592](https://github.com/ProcedureKit/ProcedureKit/pull/592) Adds `UIProcedure` and `AlertProcedure` as part of _ProcedureKitMobile_ framework. Usage is like this:
+    ```swift
+    let alert = AlertProcedure(presentAlertFrom: self)
+    alert.add(actionWithTitle: "Sweet") { alert, action in
+        alert.log.info(message: "Running the handler!")
+    }
+    alert.title = "Hello World"
+    alert.message = "This is a message in an alert"
+    queue.add(operation: alert)
+    ```
+
+1. [#623](https://github.com/ProcedureKit/ProcedureKit/issues/623) Adds `ProcedureKit/All` CocoaPod sub-spec which corresponds to all the cross platform components.
+2. [#625](https://github.com/ProcedureKit/ProcedureKit/issues/625) Tweaks for _TestingProcedureKit_ imports.
+3. [#626](https://github.com/ProcedureKit/ProcedureKit/issues/626),  [#627](https://github.com/ProcedureKit/ProcedureKit/issues/627),[#640](https://github.com/ProcedureKit/ProcedureKit/pull/640), [#646](https://github.com/ProcedureKit/ProcedureKit/pull/646) Tweaks Network procedures so that cancellation is thread safe, avoids a potential race condition, and testing enhancements.
+4. [#624](https://github.com/ProcedureKit/ProcedureKit/issues/624) Some minor fixes after a through investigation with the visual memory debugger - which can produce erroneous leak indicators.
+6. [#630](https://github.com/ProcedureKit/ProcedureKit/issues/630) Adds a build step to CI to perform integration testing using CocoaPods works with the current changes on a feature branch. Currently this does not work for 3rd party contributions.
+7. [#634](https://github.com/ProcedureKit/ProcedureKit/issues/634) Fixes some copy/paste typos from a merge conflict.
+8. [#635](https://github.com/ProcedureKit/ProcedureKit/pull/635) Removes the fatal override of `waitUntilFinished()`.
+9. [#639](https://github.com/ProcedureKit/ProcedureKit/pull/639) Thread safety improvements to `ProcedureProcedure` in _ProcedureKitMac_.
+10. [#643](https://github.com/ProcedureKit/ProcedureKit/pull/643) Further testing of `DidExecute` observers. Adds `checkAfterDidExecute` API to `ProcedureKitTestCase`.
+11. [#649](https://github.com/ProcedureKit/ProcedureKit/pull/649) Removes all code signing settings.
+12. [#644](https://github.com/ProcedureKit/ProcedureKit/pull/644) Fixes issues for _ProcedureKitCloud_ in Xcode 8.2 - as they've changed some APIs here.
+13. [#647](https://github.com/ProcedureKit/ProcedureKit/pull/647) Marks non-open properties/methods as `final`.
+14. [#650](https://github.com/ProcedureKit/ProcedureKit/pull/650) Adds more tests for cancelling `Condition` subclasses.
+15. [#655](https://github.com/ProcedureKit/ProcedureKit/pull/655) Removes the beta tag from the internal framework versioning.
+
+# 4.0.0 Beta 5
+Beta 5 is primarily about refinements and bug fixes.
+
+## Breaking API Changes
+1. [#574](https://github.com/ProcedureKit/ProcedureKit/issues/574), [#583](https://github.com/ProcedureKit/ProcedureKit/pull/583) Removal of `GroupObserverProtocol`
+    This protocol was to allow observer to be attached to a group, and be informed when children are added to the group. Instead, this functionality has been rolled into `ProcedureObserver`.
+2. [#601](https://github.com/ProcedureKit/ProcedureKit/pull/601), [#605](https://github.com/ProcedureKit/ProcedureKit/pull/605) Refactor of `ResultInjection`.
+    The `ResultInjection` protocol has been overhauled, again. The major changes here, are:
+    - Change to a pair of protocols, `InputProcedure` and  `OutputProcedure`, with associated type `Input` and `Output` respectively. This change is to avoid overloading the "result" concept.
+    - Renames `PendingValue<T>` to just `Pending`. Both protocols have properties which are `Pending`, which in turn maintains  the `.pending` and `.ready` cases.
+    - `ProcedureResult<T>` which is an _either_ enum type, which is either `.success(value)` or `.failure(error)`. The error is not an associated type - so any `Error` will do.
+    - `OutputProcedure`'s `output` property is `Pending<ProcedureResult<Output>>` which means that it can now capture the procedure finishing with an error instead of just a value.
+
+    In addition, `Procedure` subclasses which conform to `OutputProcedure` can use the following API:
+    
+    ```swift
+    /// Finish the procedure with a successful result.
+    finish(withResult: .success(outputValue))
+
+    /// Finish the procedure with an error.
+    finish(withResult: .failure(anError))    
+    ``` 
+    
+    To support `OutputProcedure` with a `Void` output value, there is also a public constant called `success` which represents `.success(())`.
+    
+    All other APIs have been changed to reflect this change, e.g. `injectResult(from: dependency)` works as before if your receiver is updated to conform to `OutputProcedure`.
+3. [#561](https://github.com/ProcedureKit/ProcedureKit/pull/561) Rename & refactor of `ResilientNetworkProcedure`
+    `NetworkProcedure` now performs the functionality of network resiliency, in addition to automatic handling of client reachability errors.
+
+
+## New Features
+1. [#565](https://github.com/ProcedureKit/ProcedureKit/pull/565) `NetworkDownloadProcedure`
+    Thanks to [@yageek](https://github.com/yageek) for adding support for network file downloads.
+2. [#567](https://github.com/ProcedureKit/ProcedureKit/pull/567) `NetworkUploadProcedure`
+    Thanks to [@yageek](https://github.com/yageek) for adding support for network file uploads.
+3. [#570](https://github.com/ProcedureKit/ProcedureKit/pull/570) `ProcessProcedure`
+    Thanks to [@yageek](https://github.com/yageek) for adding support for wrapping `Process` (previously `NSTask`) to _ProcedureKitMac_.
+4. [#542](https://github.com/ProcedureKit/ProcedureKit/pull/542), [#599](https://github.com/ProcedureKit/ProcedureKit/pull/599) `CloudKitProcedure`
+    This is a wrapper class for running Apple's `CKOperation` subclasses.
+5. [#587](https://github.com/ProcedureKit/ProcedureKit/pull/587) Mutual Exclusion categories
+    Mutually exclusive conditions now support arbitrary category names, which means that a condition can be used to add mutual exclusion to any number of disparate procedures.
+6. [#563](https://github.com/ProcedureKit/ProcedureKit/pull/563) `NetworkProcedure` (called `NetworkReachableProcedure` here)
+    `NetworkProcedure` is a wrapper procedure for executing network procedures. It has full support for handling client reachability issues, and resilient handling of client and server errors.  
+7. [#569](https://github.com/ProcedureKit/ProcedureKit/issues/569) `Profiler`
+    Thanks to [@yageek](https://github.com/yageek) for implementing the `Profiler` which is a `ProcedureObserver` and can be used to report timing profiles of procedures.
+8. [#593](https://github.com/ProcedureKit/ProcedureKit/pull/593) Supports the merging of collections of `Procedure` subclasses which all conform to `ResultInjection`.
+    These APIs `flatMap`, `reduce` and `gathered()` each return another procedure which will depend on all other procedures in the collection, and then perform synchronous processing of the results. For example, either just gather the results into a single array, or flat map the resultant array into an array of different types, or reduce the resultant array into a single type.
+9. [#606](https://github.com/ProcedureKit/ProcedureKit/pull/606), [#607](https://github.com/ProcedureKit/ProcedureKit/pull/607) `AsyncResultProcedure` etc.
+    `AsyncResultProcedure`, `AsyncBlockProcedure` and `AsyncTransformProcedure` support asynchronous blocks. Each procedure's initialiser receives a _finishWithResult_ closure, which must be called to finish the procedure. For example:
+    
+    ```swift
+    let procedure = AsyncBlockProcedure { finishWithResult in
+        asyncTask {
+            finishWithResult(success)
+        }
+    }
+    ```
+
+
+
+## Bug Fixes etc
+1. [#562](https://github.com/ProcedureKit/ProcedureKit/pull/562) Fixes a typo in `LocationServicesRegistrarProtocol`
+2. [#566](https://github.com/ProcedureKit/ProcedureKit/pull/566) Fixes `Condition` so that it can support result injection.
+3. [#575](https://github.com/ProcedureKit/ProcedureKit/pull/575) Improves the performance of `add(observer: )`.
+4. [#568](https://github.com/ProcedureKit/ProcedureKit/pull/578) Opens up `add(operation: Operation)` for overriding by subclasses. Thanks to [@bizz84](https://github.com/bizz84).
+6. [#579](https://github.com/ProcedureKit/ProcedureKit/pull/579) Adds more test coverage to `GroupProcedure`.
+7. [#586](https://github.com/ProcedureKit/ProcedureKit/issues/586) Fixes `HTTPRequirement` initializers. Thanks to [@yageek](https://github.com/yageek) for this one.
+8. [#588](https://github.com/ProcedureKit/ProcedureKit/pull/588) Fixes bug where using the `produce(operation:)` from a `GroupProcedure` subclass was failing. This was actually introduced by other changes since Beta 4.
+9. [#591](https://github.com/ProcedureKit/ProcedureKit/pull/591) Adds some missing equality checks in `ProcedureKitError.Context`.
+10. [#600](https://github.com/ProcedureKit/ProcedureKit/pull/600) Minor changes to remove @testable imports.
+11. [#602](https://github.com/ProcedureKit/ProcedureKit/pull/602) Adds stress tests for cancelling `RepeatProcedure`.
+12. [#603](https://github.com/ProcedureKit/ProcedureKit/pull/603) Adds more `GroupProcedure` tests.
+13. [#608](https://github.com/ProcedureKit/ProcedureKit/pull/608) Uses the internal queue for the `DispatchAfter` delayed functionality in `NetworkActivityController` instead of the main queue.
+14. [#611](https://github.com/ProcedureKit/ProcedureKit/pull/611) Restores `import Foundation` etc where needed in all classes, which makes Xcode 8 a little happier - although not strictly necessary.
+15. [#615](https://github.com/ProcedureKit/ProcedureKit/pull/615) Fixes issues where `BackgroundObserver` was not removing notification observers.
+16. [#619](https://github.com/ProcedureKit/ProcedureKit/pull/619) Fixes some issues with location related procedures.
+
+## Thread Safety bug fixes
+Recently, [@swiftlyfalling](https://github.com/swiftlyfalling) has been fixing a number of thread safety issues highlighted either from our own stress tests, or from the Thread Sanitizer. 
+1. `NetworkObserver` - [#577](https://github.com/ProcedureKit/ProcedureKit/pull/577)
+2. `StressTestCase` - [#596](https://github.com/ProcedureKit/ProcedureKit/pull/596) 
+3. `RepeatProcedure` - [#597](https://github.com/ProcedureKit/ProcedureKit/pull/597)
+4. `Procedure` - [#598](https://github.com/ProcedureKit/ProcedureKit/pull/598)
+5. `NetworkDataProcedure` etc - [#609](https://github.com/ProcedureKit/ProcedureKit/pull/609)
+6. `BackgroundObserver` - [#614](https://github.com/ProcedureKit/ProcedureKit/pull/614)
+7. `DelayProcedure` - [#616](https://github.com/ProcedureKit/ProcedureKit/pull/616)
+
+# 4.0.0 Beta 4
+Beta 4 is a significant maturation over Beta 3. There are a couple of breaking changes here which I will call out explicitly. Overall however, the APIs have been refined, adjusted and extended, bugs have been fixed, and tests have been stabilised.
+
+Additionally, Beta 4 now supports integration via Carthage _and CocoaPods_ including full support for _TestingProcedureKit_ and CocoaPod subspecs.
+
+## Breaking API Changes
+1. [#519](https://github.com/ProcedureKit/ProcedureKit/pull/519) Renames 
+    - `AuthorizationStatusProtocol` to `AuthorizationStatus`. 
+    Thanks to [@martnst](https://github.com/martnst).
+2. [#520](https://github.com/ProcedureKit/ProcedureKit/pull/520) Renames:
+    - `GetAuthorizationStatus` to `GetAuthorizationStatusProcedure`, 
+    - `Authorize` to `AuthorizeCapabilityProcedure`
+    Thanks to [@martnst](https://github.com/martnst) again.
+3. [#527](https://github.com/ProcedureKit/ProcedureKit/pull/527), [#528](https://github.com/ProcedureKit/ProcedureKit/pull/528), [#541](https://github.com/ProcedureKit/ProcedureKit/pull/541), [#546](https://github.com/ProcedureKit/ProcedureKit/pull/546) ResultInjection 
+
+    ResultInjection, which is what we call the methodology of automatically injecting the result from one procedure as the requirement of a dependency, has been revamped in Beta 4.
+    - It is now an extension on `ProcedureProctocol`.
+    - The API now support injection via a transform block. For example, lets assume that we are using `NetworkDataProcedure` which requires a `URLRequest`, and we have a procedure which results in a `URL`, we might do this:
+        ```swift
+        download.injectResult(from: getURL) { url in
+            return URLRequest(url: $0) 
+        }
+        ```
+    - Refactors `ResultInjection` protocol to use `PendingValue<T>`. Now the `requirement` and `result` properties are `PendingValue<Requrement>` and `PendingValue<Result>` respectively. This avoids the need to use explicitly unwrapped optionals for the `Requirement`. For example:
+        ```swift
+        class MyProcedure: Procedure, ResultInjection {
+            var requirement: PendingValue<Foo> = .pending
+            var result: PendingValue<Bar> = .pending
+        }
+        ```
+    - Extension APIs automatically unwrap optionals. This means that where a `Result? == Requirement` the result will be automatically unwrapped. 
+
+## New Features
+1. [#516](https://github.com/ProcedureKit/ProcedureKit/pull/516), [#534](https://github.com/ProcedureKit/ProcedureKit/pull/534): `AnyProcedure` 
+
+    This is a new procedure which supports composition of any `Procedure` subclass conforming to `ResultInjection` APIs with complete type erasure. This makes the following usage possible: 
+    - Inject / store generic `Procedure` subclasses into other types.
+    - Store many different types of `Procedure` subclasses in a homogenous storage container, so long as they have the same sub-type `Requirement` and `Result`.
+
+    An example of where this is useful would be with a strategy design pattern, where each strategies likely has a different `Procedure` subclass, but the `Requirement` (i.e. input) and `Result` (i.e. output) of each is the same. Given this, any strategy can be injected into a `GroupProcedure` or other structure type-erased using `AnyProcedure<Requirement,Result>`.
+2. [#523](https://github.com/ProcedureKit/ProcedureKit/pull/523) _ProcedureKitCloud_
+
+    Added a _ProcedureKitCloud_ framework, which currently just
+includes `Capability.CloudKit`. Unfortunately the full `CloudKitProcedure` class did not get finished in time for this beta. However, it is very close to being finished, see PR: [#542](https://github.com/ProcedureKit/ProcedureKit/pull/542).
+3. [#524](https://github.com/ProcedureKit/ProcedureKit/pull/524), [#525](https://github.com/ProcedureKit/ProcedureKit/pull/525), [#526](https://github.com/ProcedureKit/ProcedureKit/pull/526), [#538](https://github.com/ProcedureKit/ProcedureKit/pull/538),[#547](https://github.com/ProcedureKit/ProcedureKit/pull/547) _ProcedureKitNetwork_
+    
+    _ProcedureKitNetwork_ is a framework which offers a very simple wrapper around `URLSession` **completion based** APIs. Currently only for `NetworkDataProcedure` which uses the `URLSessionDataTask` based APIs. If you need to use the delegate based APIs you cannot use this `Procedure` subclass.
+    
+    Additionally, there is full support in _TestingProcedureKit_ for using `TestableURLSession` which allows framework consumers to check that the session receives the correct request etc.
+4. [#536](https://github.com/ProcedureKit/ProcedureKit/pull/536) `.then { }` API
+
+    Added an alternative way of adding dependencies on `Operation` in a chain. For example:
+    ```swift
+    let operations = foo.then(do: bar).then { Baz() }
+    ```
+    Thanks to [@jshier](https://github.com/jshier) for initial idea and suggestion - sorry it took so long to get done!
+5. [#508](https://github.com/ProcedureKit/ProcedureKit/pull/508), [#553](https://github.com/ProcedureKit/ProcedureKit/pull/553) CocoaPods
+
+    Note here that the standard pod is just the core framework. This is Extension API compatible with support for all 4 platforms. To get iOS related classes, such as `BackgroundObserver` which are not Extension API compatible use `ProcedureKit/Mobile`, likewise for `ProcedureKit/Location`, `ProcedureKit/Network`, `ProcedureKit/Cloud` etc.
+    _TestingProcedureKit_, has its own podspec.
+6. [#537](https://github.com/ProcedureKit/ProcedureKit/pull/537) `ResilientNetworkProcedure` Beta
+
+    This is a `RetryProcedure` subclass which is designed to add network resiliency around network request based `Procedure` subclasses. This procedure works by providing a value which corresponds to `ResilientNetworkBehavior` protocol, and a closure which returns a new network request procedure. The protocol allows the framework consumer to decide how to interpret status/error codes, and trigger retries.
+7. [#550](https://github.com/ProcedureKit/ProcedureKit/pull/550) `ConcurrencyTestCase`
+
+    This is a new `ProcedureKitTestCase` subclass in _TestingProcedureKit_ which has methods to help test concurrency issues in _ProcedureKit_ itself, but also in your applications. Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for adding it.
+8. [#552](https://github.com/ProcedureKit/ProcedureKit/pull/552) `wait(forAll: [Procedure])` API 
+
+    This is added to `ProcedureKitTestCase`. Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for adding this.
+9. [#554](https://github.com/ProcedureKit/ProcedureKit/pull/554) Adds `did(execute: Procedure)` observer callback.
+
+    Use this with great caution, as it may not always do what you expect depending on the behavior of the `execute` method of the procedure. From the discussion:
+    > all that's currently guaranteed is that didExecuteObservers will be called after execute() returns. The rest is up to the specifics of the Procedure subclass implementation.
+    This will likely be improved before 4.0.0 is final. 
+    
+## Bug Fixes etc
+1. [#518](https://github.com/ProcedureKit/ProcedureKit/pull/518) Fixes failing release build regression.
+2. [#531](https://github.com/ProcedureKit/ProcedureKit/pull/531) Adds default empty implementation to some of the Queue Delegate methods. Feedback welcome here!
+3. [#533](https://github.com/ProcedureKit/ProcedureKit/pull/533) Adds an area in the repo for talks and presentations which have been given about _Operations_ or _ProcedureKit_. Watch out for [@jshier](https://github.com/jshier) who will be speaking at [Swift Summit](https://www.swiftsummit.com) _ProcedureKit and you_ on Nov 7th. 😀😀😀
+4. [#532](https://github.com/ProcedureKit/ProcedureKit/pull/532) Fixes a bug where `GroupProcedure` would collect errors from its children after it had been cancelled. This is a bit annoying, if  a group is cancelled, it will cancel all of its children with an error (`ProcedureKitError.parentDidCancel(error)`), but it would then receive in its delegate all of those errors from the children.
+5. [#539](https://github.com/ProcedureKit/ProcedureKit/pull/539) Tweaks to cancel `BlockProcedure` stress tests.
+6. [#540](https://github.com/ProcedureKit/ProcedureKit/pull/540) Moves `import ProcedureKit` into umbrella headers.
+7. [#544](https://github.com/ProcedureKit/ProcedureKit/pull/544) Fixes `BlockProcedure` stress tests - thanks to [@swiftlyfalling](https://github.com/swiftlyfalling).
+8. [#545](https://github.com/ProcedureKit/ProcedureKit/pull/545) Fixes a bug where `ExclusivityManager` was not thread safe. Thanks to [@myexec](https://github.com/myexec) for reporting the bug, and [@swiftlyfalling](https://github.com/swiftlyfalling) for fixing it.
+9. [#549](https://github.com/ProcedureKit/ProcedureKit/pull/549) Fixes random crashed in `QueueTestDelegate` - thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for fixing this, and generally being awesome at identifying where code paths are not thread safe 💚.
+10. [#557](https://github.com/ProcedureKit/ProcedureKit/pull/557) Fixes some CI errors in Fastfile.
+11. [#558](https://github.com/ProcedureKit/ProcedureKit/pull/558) [#559](https://github.com/ProcedureKit/ProcedureKit/pull/559) Fixes issue with Xcode 8.1 release builds, thanks so much to [@pomozoff](https://github.com/pomozoff) for figuring out the issue here!
+12. [#556](https://github.com/ProcedureKit/ProcedureKit/pull/556) Adds group concurrency tests using the new `ConcurrencyTestCase`. Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for their awesome contributions!
+
+# 4.0.0 Beta 3
+
+Beta 3 adds _ProcedureKitMobile_, _ProcedureKitLocation_ and _TestingProcedureKit_ frameworks. The mobile framework is suitable for use in iOS applications, although it does not yet have `AlertProcedure` which will come in a future beta.
+
+To integrate these frameworks, use:
+```swift
+import ProcedureKit
+```
+which can be done anywhere, such as internal frameworks and extensions, and on any platform.
+
+```swift
+import ProcedureKitMobile
+```
+which can only be done in an iOS application target, as it’s not extension compatible.
+
+```swift
+import ProcedureKitLocation
+```
+which can be used on any platform.
+
+_TestingProcedureKit_ is a framework is for adding to test bundle targets. It links with XCTest, so cannot be added to an application target. While documentation is sorely lacking here, this is very useful for writing unit tests for `Procedure` subclasses. It has APIs to support waiting for procedures to run, and asserting their end state.
+
+## New Features
+
+1. [#476](https://github.com/ProcedureKit/ProcedureKit/pull/476) Adds `BackgroundObserver`
+2. [#496](https://github.com/ProcedureKit/ProcedureKit/pull/496) Adds `FilterProcedure`
+3. [#497](https://github.com/ProcedureKit/ProcedureKit/pull/497) Adds `ReduceProcedure`
+4. [#498](https://github.com/ProcedureKit/ProcedureKit/pull/498) Adds `NetworkObserver`
+5. [#499](https://github.com/ProcedureKit/ProcedureKit/pull/499) Adds `Capability.Location`
+6. [#500](https://github.com/ProcedureKit/ProcedureKit/pull/500) Adds `UserLocationProcedure`
+7. [#502](https://github.com/ProcedureKit/ProcedureKit/pull/502) Adds `ReverseGeocodeUserLocationProcedure`
+8. [#503](https://github.com/ProcedureKit/ProcedureKit/pull/503) Adds `ReverseGeocodeUserLocationProcedure`
+
+## Bug fixes etc
+
+9. [#503](https://github.com/ProcedureKit/ProcedureKit/pull/503) Fixes an issue where the minimum deployment target was incorrect for iOS.
+10. [#510](https://github.com/ProcedureKit/ProcedureKit/pull/510) Makes procedures which were `public` and therefore not override-able by a framework consumer `open`. Got to watch out for these.
+11. [#511](https://github.com/ProcedureKit/ProcedureKit/pull/511) Refactors `BlockProcedure` to no longer be a subclass of `TransformProcedure`. I did like the simplicity of this, however, I want to be able to automatically throw an error if the requirement of `TransformProcedure` is not set.
+
+# 4.0.0 Beta 2
+
+Beta 2 is all about rounding out the majority of the missing functionality from _ProcedureKit_, and additionally fixing integration issues.
+
+1. [#471](https://github.com/ProcedureKit/ProcedureKit/pull/471) NegatedCondition
+2. [#472](https://github.com/ProcedureKit/ProcedureKit/pull/472) SilentCondition 
+3. [#474](https://github.com/ProcedureKit/ProcedureKit/pull/471) Fixes for how Procedure finishes - thanks [@swiftlyfalling](https://github.com/swiftlyfalling)
+4. [#473](https://github.com/ProcedureKit/ProcedureKit/pull/471) BlockCondition
+5. [#470](https://github.com/ProcedureKit/ProcedureKit/pull/471) NoFailedDependenciesCondition
+6. [#475](https://github.com/ProcedureKit/ProcedureKit/pull/471) TimeoutObserver
+7. [#478](https://github.com/ProcedureKit/ProcedureKit/pull/471) Procedure name and identity
+8. [#480](https://github.com/ProcedureKit/ProcedureKit/pull/471) BlockObserver - thanks to [@jshier](https://github.com/jshier) for his input on this.
+9. [#487](https://github.com/ProcedureKit/ProcedureKit/pull/471) Adds ComposedProcedure & GatedProcedure
+10. [#488](https://github.com/ProcedureKit/ProcedureKit/pull/471) RepeatProcedure
+11. [#491](https://github.com/ProcedureKit/ProcedureKit/pull/471) RetryProcedure
+12. [#492](https://github.com/ProcedureKit/ProcedureKit/pull/492) Capabilities
+
+In addition to the above additions, fixes have been made to fix Release builds correctly compile, despite some Swift 3 compiler bugs in Xcode 8 and 8.1. See the release notes for more instructions.
+
+# 4.0.0 Beta 1
+
+Well, it’s time to say goodbye to _Operations_ and hello to _ProcedureKit_. _ProcedureKit_ is a complete re-write of _Operations_ in Swift 3.0, and has the following key changes.
+
+1. _ProcedureKit_
+    _Operations_ has been lucky to have many contributors, and for _ProcedureKit_ I wanted to be able to recognise the fantastic contributions of this little community properly. So the repository has been transferred into an organization. At the moment, the only additional member is [@swiftlyfalling](https://github.com/swiftlyfalling) however I hope that more will join soon. In addition to moving to an org, there are now contribution guidelines and code of conduct documents.
+    
+2. Naming changes
+    Because Swift 3.0 has dropped the `NS` prefix from many classes, including `NSOperation`, `NSOperationQueue` and `NSBlockOperation`, _Operations_ had some pretty significant issues in Swift 3.0. At WWDC this year, I was able to discuss _Operations_ with Dave DeLong and Philippe Hausler. We brainstormed some alternatives, and came up with “Procedure”, which I’ve sort of grown accustomed to now. The name changes are  widespread, and essentially, what was once `Operation` is now `Procedure`.
+    
+3. Project structure
+    For a long time, we’ve had an issue where some classes are not extension API compatible. This has resulted in having two projects in the repository, which in turn leads to problems with Carthage not being able to build desired frameworks. With ProcedureKit, this problem is entirely resolved. The core framework, which is the focus of this beta, is entirely extension API compatible. It should be imported like this:
+    ```swift
+    import ProcedureKit
+    ```
+    
+    Functionality which depends on UIKit, such as `AlertProcedure` will be exposed in a framework called `ProcedureKitMobile`, and imported like this:
+    ```swift
+    import ProcedureKit
+    import ProcedureKitMobile
+    ```
+    
+    Similarly for other non-core functionality like CloudKit wrappers etc.
+    
+    In addition to types which should be used in applications, I wanted to expose types to aid writing unit tests. This is called `TestingProcedureKit`, which itself links against `XCTest`. *It can only be used inside test bundle targets*. This framework includes `ProcedureKitTestCase` and `StressTestCase` which are suitable for subclassing. The former then exposes simple APIs to wait for procedures to run using `XCTestExpectation`. Additionally, there are `XCTAssertProcedure*` style macros which can assert that a `Procedure` ran as expected. To use it in your own application’s unit test target:
+    ```swift
+    import ProcedureKit
+    import TestingProcedureKit
+    @testable import MyApplication
+    ```    
+4. Beta 1 Functionality
+    This beta is focused on the minimum. It has `Procedure`, `ProcedureQueue`, `GroupProcedure`, `MapProcedure`, `BlockProcedure` and `DelayProcedure`. In addition, there is support for the following features:
+    1. Attaching conditions which may support mutual exclusion
+    2. Adding observers - see notes below.
+    3. Result injection has been simplified to a single protocol.
+    4. Full logging support
+    5. Errors are consolidated into a single `ProcedureKitError` type.
+
+5. Observers
+    An annoying element of the observers in _Operations_ is that the received `Operation` does not retain full type fidelity. It’s just `Operation`, not `MyOperationSubclass`. With `ProcedureKit` this has been fixed as now the underlying protocol `ProcedureObserver` is generic over the `Procedure` which is possible as there is now a `ProcedureProtocol`. This means, that the block observers are now generic too. Additionally, an extension on `ProcedureProtocol` provides convenience methods for adding block observers. This means that adding block observers should now be done like this:    
+    ```swift 
+    let foo = FooProcedure()
+    foo.addDidFinishBlockObserver { foo, errors in
+        // No need to cast argument to FooProcedure
+        foo.doFooMethod()
+    }
+    ```
+6. `BlockProcedure`
+    The API for `BlockProcedure` has changed somewhat. The block type is now `() throws -> Void`. In some regards this is a reduction in capability over `BlockOperation` from _Operations_ which received a finishing block. The finishing block meant that the block could have an asynchronous callback to it.
+    
+    While this functionality might return, I think that it is far better to have a simple abstraction around synchronous work which will be enqueued and can throw errors. For asynchronous work, it would be best to make a proper `Procedure` subclass.
+    
+    Having said that, potentially we will add `AsyncBlockProcedure` to support this use case. Please raise an issue if this is something you care about!
+    
+Anyway, I think that is about it - thanks to all the contributors who have supported _Operations_ and _ProcedureKit_ while this has been written. Stay tuned for Beta 2 in a week or so.
+
+# 3.4.0
+
+This is a release suitable for submission for iOS 10, but built using Swift 2.3 & Xcode 8.
+
+# 3.3.0
+This is a release suitable for submission for iOS 10, but built using Swift 2.2 & Xcode 7.
+
+1. [OPR-452](https://github.com/ProcedureKit/ProcedureKit/pull/452)  Resolves the warning related to CFErrorRef.
+2. [OPR-453](https://github.com/ProcedureKit/ProcedureKit/issues/453), [OPR-454](https://github.com/ProcedureKit/ProcedureKit/pull/454) Fixes an issue where the Mac OS X deployment target was incorrect.
+3. [OPR-456](https://github.com/ProcedureKit/ProcedureKit/pull/456)  Modifies the podspec to remove Calendar, Passbook, Photos, CloudKit, Location, AddressBook etc from the standard spec. This  is to prevent linking/importing OS frameworks which consumers might not have explanations in their info.plist. This is following reports that  are being more restrictive for iOS 10 submissions.
+
+# 3.2.0
+This is a pretty special release! All the important changes have been provided by contributors! 🚀😀💚
+
+Additionally, [@swiftlyfalling](https://github.com/swiftlyfalling) has become a _ProcedureKit_ core contributor 😀 
+
+1. [OPR-416](https://github.com/ProcedureKit/ProcedureKit/issues/416), [OPR-417](https://github.com/ProcedureKit/ProcedureKit/issues/417) Thanks to [@pomozoff](https://github.com/pomozoff) for reporting and fixing a bug which could cause a crash in an edge case where operation with conditions is previously cancelled. Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling).
+2. [OPR-420](https://github.com/ProcedureKit/ProcedureKit/pull/420) Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for replacing an assertion failure, and adding some more stress tests in `Condition`’s `execute` method.
+3. [OPR-344](https://github.com/ProcedureKit/ProcedureKit/issues/344), [OPR-344](https://github.com/ProcedureKit/ProcedureKit/pull/421) Thanks to [@ryanjm](https://github.com/ryanjm) for reporting (_a while ago_, sorry!) a bug in `NetworkObserver`, and thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for fixing the bug!
+4. [OPR-422](https://github.com/ProcedureKit/ProcedureKit/pull/422)  Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for adding some robustness to `NetworkObserver` and its tests.
+5. [OPR-419](https://github.com/ProcedureKit/ProcedureKit/pull/419) Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for fixing a bug which improves the performance of a whole number of tests. Mostly the changes here are to ensure that `XCTestExpectation`s get their `fulfill()` methods called on the main queue.
+6. [OPR-423](https://github.com/ProcedureKit/ProcedureKit/pull/423) Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for fixing a bug where `cancelWithError()` could result in an assertion due to an illegal state transition. They even added some stress tests around this 💚
+7. [OPR-425](https://github.com/ProcedureKit/ProcedureKit/pull/425)  Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for refactoring some unit tests to use a dispatch group instead of multiple `XCTestExpectation` instances.
+8. [OPR-427](https://github.com/ProcedureKit/ProcedureKit/pull/427) I made some changes to the CI pipeline for Swift 2.2 branch so that [@swiftlyfalling](https://github.com/swiftlyfalling) didn’t have to wait too long to merge their pull requests.
+9. [OPR-434](https://github.com/ProcedureKit/ProcedureKit/pull/434) Thanks to [@pomozoff](https://github.com/pomozoff) for raising a configuration issue where a file was added to the Xcode project twice, causing a warning when running Carthage.
+10. [OPR-435](https://github.com/ProcedureKit/ProcedureKit/pull/435) Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for making some improvements to avoid a Swift 2.2 bug which causes a memory leak when using string interpolation.
+
+# 3.1.1
+
+1. [OPR-410](https://github.com/danthorpe/Operations/pull/410) Thanks to [@paulpires](https://github.com/paulpires) for fixing a bug in the `ReachabilityManager`.
+2. [OPR-412](https://github.com/danthorpe/Operations/pull/412) Makes the `condition` property of `Operation` publicly accessible.
+
+# 3.1.0
+
+## Improvements to Result Injection
+
+I’ve made some changes to make working with _result injection_ easier.
+
+1. [OPR-362](https://github.com/danthorpe/Operations/pull/362), [OPR-363](https://github.com/danthorpe/Operations/pull/363), [OPR-378](https://github.com/danthorpe/Operations/pull/378)
+    These changes simplify the core implementation of how result injection works, no longer using any closure capture. Additionally, if the `Requirement` is equal to `Result?`, the framework provides a new API, for _requiring_ that the result is available. For example:
+    
+    ```swift
+    class Foo: Operation, ResultOperationType {
+        var result: String?
+        // etc
+    }
+    
+    class Bar: Operation, AutomaticInjectionOperationType {
+        var requirement: String = “default value”
+        // etc
+    }
+    
+    let foo = Foo()
+    let bar = Bar()
+    bar.requireResultFromDependency(foo)
+    ```
+    
+    Now, if `foo` finishes with a nil `result` value, `bar` will be automatically cancelled with an `AutomaticInjectionError.RequirementNotSatisfied` error. And it’s no longer necessary to `guard let` unwrap the requirement in the `execute()` method.
+    
+    This works well in situations where the `requirement` property is not an optional, but can be set with a default value.
+   
+## Improvements to Conditions
+
+I’ve made some changes to improve working with `Condition`s. The focus here has been to support more subtle/complex dependency graphs, and suppressing errors resulting from failed conditions. 
+
+2. [OPR-379](https://github.com/danthorpe/Operations/pull/379), [OPR-386](https://github.com/danthorpe/Operations/pull/386) Fixes some unexpected behaviour where indirect dependencies (i.e. dependencies of a condition) which are also direct dependencies got added to the queue more than once. This was fixed more generally to avoid adding operations which are already enqueued.
+3. [OPR-385](https://github.com/danthorpe/Operations/pull/385), [OPR-390](https://github.com/danthorpe/Operations/pull/390), [OPR-397](https://github.com/danthorpe/Operations/pull/397) Adds support for ignoring condition failures
+
+    In some situations, it can be beneficial for an operation to not collect an error if an attached condition fails. To support this, `ConditionResult` now has an `.Ignored` case, which can be used to just cancel the attached `Operation` but without an error.
+    
+    To make this easier, a new condition, `IgnoredCondition` is provided which composes another condition. It will ignore any failures of the composed condition.
+    
+    In addition, `NoFailedDependenciesCondition` now supports an initialiser where it will ignore any dependencies which are also ignored, rather than failing for cancelations. This can be used like this:
+    
+    ```swift
+    dependency.addCondition(IgnoredCondition(myCondition))
+    operation.addDependency(dependency)
+    operation.addCondition(NoFailedDependenciesCondition(ignoreCancellations: true))
+    ``` 
+    
+    Note that the `ignoreCancellations` argument defaults to false to maintain previous behaviour. Thanks to [@aurelcobb](https://github.com/aurelcobb) for raising this issue.
+
+## API Changes
+
+2. [OPR-361](https://github.com/danthorpe/Operations/pull/361) `GroupOperation`’s queue is now private.
+
+    Given the way that `GroupOperation` works, critically that it acts as its queue’s delegate, this change restricts the ability for that contract to be broken. Specifically, the queue is now private, but its properties are exposed via properties of the group.
+
+    Additionally, the default initialiser of `GroupOperation` now takes an optional `dispatch_queue_t` argument. This dispatch queue is set as the `NSOperationQueue`’s `underlyingQueue` property, and effectively allows the class user to set a target dispatch queue. By default this is `nil`.
+
+    This change will require changes to subclasses which override the default initialiser.
+
+    Thanks to [@swiftlyfalling](https://github.com/swiftlyfalling) for these changes.
+	
+   
+## Bug Fixes
+
+3. [OPR-377](https://github.com/danthorpe/Operations/pull/377) GatedOperation will now cancel its composed operation if the gate is closed.
+4. [OPR-365](https://github.com/danthorpe/Operations/pull/365) Fixes a log message error. Thanks to [@DeFrenZ](https://github.com/DeFrenZ) for this one.
+5. [OPR-382](https://github.com/danthorpe/Operations/pull/382) Fixes an issue where `TaskOperation` was included in non-macOS platforms via CocoaPods.
+
+
 # 3.0.0
 
 🚀🙌 After a significant period of testing, Version 3.0.0 is finally here! Checkout the details below:
